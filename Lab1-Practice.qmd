@@ -1,0 +1,96 @@
+---
+title: "Lab1_Practice"
+author: "Meet"
+format: 
+  html: 
+    code-fold: true 
+    toc: true
+execute: 
+  echo: true
+  message: true
+  warning: true
+    
+editor: visual
+---
+
+# Lab Practice 1
+
+## Analysis Part 1
+
+### Loading the dataset
+
+```{r}
+library(tidyverse)
+library(gapminder)
+
+country_gdp <- gapminder %>% 
+janitor::clean_names()
+
+```
+
+### For each year and continent, summarize the average per-capita GDP across all countries in the continent . Hint: don't just average the country-level values - need to consider country populations!
+
+#### Pseudocode
+
+-   First we would need to build df for each continent.
+-   Within each continent we can they filter each year of interest to create average per-capita GDP
+-   How is population connected since per-capita GDP is already connected to an individual. (Okay figured out, we need to average by determining the Total GDP/ Total Population of the continent)
+
+```{r}
+library(dplyr)
+average_gdp <- country_gdp %>% 
+  group_by(continent, year) %>% 
+  summarize(avg_percapgdp = sum(gdp_percap * pop)/sum(pop))
+```
+
+### Plot the continent-level GDP values in scatter plot. Bonus, plot the country level values as well, with a low alpha to fade them into the background.
+
+#### Pseducode
+
+-   Create scatterplot with the continents on y-axis and GDP values on x-axis
+-   Use ggplot and and also add geompoint function
+-   Use color variation to change the color based on continent
+
+```{r}
+
+ggplot(average_gdp, aes(x = year, y = avg_percapgdp, color = continent, size = avg_percapgdp)) + geom_point() +
+  theme_minimal()
+```
+
+###Redo the scatter plot but this time, log gransform the GSP data (either in the dataframe using 'mutate', or on the plot with 'scale_y_log10()
+
+```{r}
+
+library(ggplot2)
+ggplot(average_gdp, aes(x = year, y = avg_percapgdp, color = continent)) + 
+  geom_point() +
+  geom_line() +
+  geom_jitter(data = country_gdp, aes(y = gdp_percap), alpha = .2) +
+  scale_y_log10() + labs(x = 'Year', y = 'Per capita GDP ($)', color = 'Continent') +
+  theme_minimal()
+```
+
+## Analysis Part 2
+
+###Based on the plots, choose either regular or log transformed data, and use a linear regression to estimate annual change in per capita GDP \*\* OR \*\* log(per capita GDP) accounting for continent.
+
+#### Pseudocode
+
+-   First filter the data with percapita GDP and Continent \## Dont need to do this since the dataset already has stuff
+-   Linear regression model with independant variable as continent and dependent variable per cap gdp
+
+```{r}
+
+gdp_model0 <- lm(gdp_percap ~ continent, data = country_gdp)
+summary(gdp_model0)
+
+## Just continent is not enough since we also need the variable of annual change of percap gdp, so year will get added here
+
+gdp_model1 <- lm(gdp_percap ~ year + continent + country, data = country_gdp)
+summary(gdp_model1)
+
+coef_model1 <- coef(gdp_model1)
+coef_model1
+```
+
+Write a sentence or two describing the trends you see in the plots. Which model (log or not) did you choose and why? Write a sentence or two to explain the coefficients on your linear model output, including statistical significance. Which continent is the “reference” continent? What does the “year” coefficient represent? hint: this is trickier if you went with the log-transformed model! What do the coefficients on each continent represent? Do these make intuitive sense? Does a linear model seem like a good way to approach these data? Why or why not? Render your Quarto document, and then stage, commit, and push back to your Github repository. Make sure the updates are reflected online!
